@@ -13,6 +13,11 @@
     <a href="#">
         <span class="icono">&#128202;</span> Estadísticas
     </a>
+
+    <a href="{{ route('historial.index') }}"
+   class="{{ request()->routeIs('historial*') ? 'activo' : '' }}">
+    <span class="icono">&#128203;</span> Historial de participación
+</a>
 </div>
 @endsection
 

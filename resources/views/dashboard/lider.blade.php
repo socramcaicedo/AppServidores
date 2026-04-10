@@ -8,11 +8,16 @@
         <span class="icono">&#128101;</span> Ver servidores
     </a>
 </div>
-<div class="sidebar-section">
-    <p class="sidebar-title">Cultos</p>
-    <a href="#">
-        <span class="icono">&#43;</span> Crear orden de culto
-    </a>
+<a href="{{ route('cultos.index') }}"
+   class="{{ request()->routeIs('cultos*') ? 'activo' : '' }}">
+    <span class="icono">&#128197;</span> Gestionar cultos
+</a>
+
+<a href="{{ route('servidores.index') }}"
+   class="{{ request()->routeIs('servidores*') ? 'activo' : '' }}">
+    <span class="icono">&#128101;</span> Ver servidores
+</a>
+
     <a href="#">
         <span class="icono">&#8646;</span> Registrar reemplazo
     </a>

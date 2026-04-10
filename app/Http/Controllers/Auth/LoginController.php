@@ -14,35 +14,46 @@ class LoginController extends Controller
     }
 
     public function login(Request $request)
-    {
-        $request->validate([
-            'usuario'  => 'required|string',
-            'password' => 'required|string',
-        ], [
-            'usuario.required'  => 'El nombre de usuario es obligatorio.',
-            'password.required' => 'La contraseña es obligatoria.',
-        ]);
+{
+    $request->validate([
+        'usuario'  => 'required|string',
+        'password' => 'required|string',
+    ]);
 
-        $credenciales = [
-            'usuario'  => $request->usuario,
-            'password' => $request->password,
-        ];
+    $credenciales = [
+        'usuario'  => $request->usuario,
+        'password' => $request->password,
+    ];
 
-        if (Auth::attempt($credenciales, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'));
-        }
+    if (Auth::attempt($credenciales, $request->boolean('remember'))) {
+        $request->session()->regenerate();
 
-        return back()
-            ->withInput($request->only('usuario'))
-            ->withErrors(['usuario' => 'Usuario o contraseña incorrectos.']);
+        // Registrar login en historial
+        \App\Services\HistorialService::registrar(
+            accion:      'login',
+            modulo:      'autenticacion',
+            descripcion: 'Inició sesión en el sistema',
+        );
+
+        return redirect()->intended(route('dashboard'));
     }
 
-    public function logout(Request $request)
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect()->route('login');
-    }
+    return back()
+        ->withInput($request->only('usuario'))
+        ->withErrors(['usuario' => 'Usuario o contraseña incorrectos.']);
 }
+
+public function logout(Request $request)
+{
+    // Registrar logout antes de cerrar sesión
+    \App\Services\HistorialService::registrar(
+        accion:      'logout',
+        modulo:      'autenticacion',
+        descripcion: 'Cerró sesión en el sistema',
+    );
+
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return redirect()->route('login');
+}}

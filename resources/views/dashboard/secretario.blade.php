@@ -7,9 +7,17 @@
     <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'activo' : '' }}">
         <span class="icono">&#127968;</span> Dashboard
     </a>
-    <a href="#" class="">
-        <span class="icono">&#128101;</span> Servidores
-    </a>
+  
+<a href="{{ route('servidores.index') }}"
+   class="{{ request()->routeIs('servidores*') ? 'activo' : '' }}">
+    <span class="icono">&#128101;</span> Servidores
+</a>
+
+    <a href="{{ route('historial.index') }}"
+   class="{{ request()->routeIs('historial*') ? 'activo' : '' }}">
+    <span class="icono">&#128203;</span> Historial
+</a>
+
     <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles*') ? 'activo' : '' }}">
         <span class="icono">&#128274;</span> Roles
     </a>
@@ -17,11 +25,10 @@
         <span class="icono">&#128100;</span> Usuarios
     </a>
 </div>
-<div class="sidebar-section">
-    <p class="sidebar-title">Cultos</p>
-    <a href="#"><span class="icono">&#128197;</span> Gestionar cultos</a>
-    <a href="#"><span class="icono">&#43;</span> Nuevo orden</a>
-</div>
+<a href="{{ route('cultos.index') }}"
+   class="{{ request()->routeIs('cultos*') ? 'activo' : '' }}">
+    <span class="icono">&#128197;</span> Gestionar cultos
+</a>
 <div class="sidebar-section">
     <p class="sidebar-title">Reportes</p>
     <a href="#"><span class="icono">&#128203;</span> Historial</a>

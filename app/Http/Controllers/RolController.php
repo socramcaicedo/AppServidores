@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rol;
+use App\Services\HistorialService;
 use Illuminate\Http\Request;
 
 class RolController extends Controller
@@ -21,14 +22,21 @@ class RolController extends Controller
         ], [
             'nombre_rol.required' => 'El nombre del rol es obligatorio.',
             'nombre_rol.unique'   => 'Ya existe un rol con ese nombre.',
-            'nombre_rol.max'      => 'El nombre no puede superar 100 caracteres.',
         ]);
 
-        Rol::create([
+        $rol = Rol::create([
             'nombre_rol'  => strtolower(trim($request->nombre_rol)),
             'descripcion' => $request->descripcion,
             'estado'      => 'activo',
         ]);
+
+        HistorialService::registrar(
+            accion:         'crear',
+            modulo:         'roles',
+            descripcion:    'Creó el rol: ' . $rol->nombre_rol,
+            registro_id:    $rol->id,
+            tabla_afectada: 'roles'
+        );
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Rol creado correctamente.');
@@ -40,16 +48,23 @@ class RolController extends Controller
             'nombre_rol'  => 'required|string|max:100|unique:roles,nombre_rol,' . $rol->id,
             'descripcion' => 'nullable|string|max:255',
             'estado'      => 'required|in:activo,inactivo',
-        ], [
-            'nombre_rol.required' => 'El nombre del rol es obligatorio.',
-            'nombre_rol.unique'   => 'Ya existe un rol con ese nombre.',
         ]);
+
+        $rolAnterior = $rol->nombre_rol;
 
         $rol->update([
             'nombre_rol'  => strtolower(trim($request->nombre_rol)),
             'descripcion' => $request->descripcion,
             'estado'      => $request->estado,
         ]);
+
+        HistorialService::registrar(
+            accion:         'editar',
+            modulo:         'roles',
+            descripcion:    'Editó el rol: ' . $rolAnterior . ' → ' . $rol->nombre_rol,
+            registro_id:    $rol->id,
+            tabla_afectada: 'roles'
+        );
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Rol actualizado correctamente.');
@@ -59,8 +74,16 @@ class RolController extends Controller
     {
         if ($rol->usuarios()->count() > 0) {
             return redirect()->route('admin.roles.index')
-                ->with('error', 'No se puede eliminar un rol que tiene usuarios asignados.');
+                ->with('error', 'No se puede eliminar un rol con usuarios asignados.');
         }
+
+        HistorialService::registrar(
+            accion:         'eliminar',
+            modulo:         'roles',
+            descripcion:    'Eliminó el rol: ' . $rol->nombre_rol,
+            registro_id:    $rol->id,
+            tabla_afectada: 'roles'
+        );
 
         $rol->delete();
 

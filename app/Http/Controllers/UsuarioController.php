@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Usuario;
 use App\Models\Rol;
+use App\Services\HistorialService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -26,21 +27,9 @@ class UsuarioController extends Controller
             'genero'   => 'required|in:masculino,femenino,otro',
             'edad'     => 'required|integer|min:1|max:120',
             'rol_id'   => 'required|exists:roles,id',
-        ], [
-            'nombre.required'    => 'El nombre es obligatorio.',
-            'apellido.required'  => 'El apellido es obligatorio.',
-            'usuario.required'   => 'El nombre de usuario es obligatorio.',
-            'usuario.unique'     => 'Ese nombre de usuario ya está en uso.',
-            'password.required'  => 'La contraseña es obligatoria.',
-            'password.min'       => 'La contraseña debe tener al menos 6 caracteres.',
-            'password.confirmed' => 'Las contraseñas no coinciden.',
-            'genero.required'    => 'El género es obligatorio.',
-            'edad.required'      => 'La edad es obligatoria.',
-            'rol_id.required'    => 'Debes asignar un rol.',
-            'rol_id.exists'      => 'El rol seleccionado no existe.',
         ]);
 
-        Usuario::create([
+        $usuario = Usuario::create([
             'nombre'   => ucfirst(trim($request->nombre)),
             'apellido' => ucfirst(trim($request->apellido)),
             'usuario'  => strtolower(trim($request->usuario)),
@@ -48,7 +37,16 @@ class UsuarioController extends Controller
             'genero'   => $request->genero,
             'edad'     => $request->edad,
             'rol_id'   => $request->rol_id,
+            'estado'   => 'activo',
         ]);
+
+        HistorialService::registrar(
+            accion:         'crear',
+            modulo:         'usuarios',
+            descripcion:    'Creó el usuario: ' . $usuario->nombre_completo . ' con rol ' . ($usuario->rol->nombre_rol ?? ''),
+            registro_id:    $usuario->id,
+            tabla_afectada: 'usuarios'
+        );
 
         return redirect()->route('admin.usuarios.index')
             ->with('success', 'Usuario creado correctamente.');
@@ -64,16 +62,6 @@ class UsuarioController extends Controller
             'genero'   => 'required|in:masculino,femenino,otro',
             'edad'     => 'required|integer|min:1|max:120',
             'rol_id'   => 'required|exists:roles,id',
-        ], [
-            'nombre.required'    => 'El nombre es obligatorio.',
-            'apellido.required'  => 'El apellido es obligatorio.',
-            'usuario.required'   => 'El nombre de usuario es obligatorio.',
-            'usuario.unique'     => 'Ese nombre de usuario ya está en uso.',
-            'password.min'       => 'La contraseña debe tener al menos 6 caracteres.',
-            'password.confirmed' => 'Las contraseñas no coinciden.',
-            'genero.required'    => 'El género es obligatorio.',
-            'edad.required'      => 'La edad es obligatoria.',
-            'rol_id.required'    => 'Debes asignar un rol.',
         ]);
 
         $datos = [
@@ -85,12 +73,19 @@ class UsuarioController extends Controller
             'rol_id'   => $request->rol_id,
         ];
 
-        // Solo actualizar password si se ingresó uno nuevo
         if ($request->filled('password')) {
             $datos['password'] = Hash::make($request->password);
         }
 
         $usuario->update($datos);
+
+        HistorialService::registrar(
+            accion:         'editar',
+            modulo:         'usuarios',
+            descripcion:    'Editó el usuario: ' . $usuario->nombre_completo,
+            registro_id:    $usuario->id,
+            tabla_afectada: 'usuarios'
+        );
 
         return redirect()->route('admin.usuarios.index')
             ->with('success', 'Usuario actualizado correctamente.');
@@ -98,30 +93,24 @@ class UsuarioController extends Controller
 
     public function toggleEstado(Usuario $usuario)
     {
-        // Evitar que el secretario se desactive a sí mismo
         if ($usuario->id === auth()->id()) {
             return redirect()->route('admin.usuarios.index')
                 ->with('error', 'No puedes desactivarte a ti mismo.');
         }
 
-        // Usar campo email como bandera de estado (activo = tiene email o null)
-        // Usamos una columna virtual: si password empieza con 'INACTIVO:' está desactivado
-        $estaInactivo = str_starts_with($usuario->password, 'INACTIVO:');
+        $nuevoEstado = $usuario->estado === 'activo' ? 'inactivo' : 'activo';
+        $usuario->update(['estado' => $nuevoEstado]);
 
-        if ($estaInactivo) {
-            $usuario->update([
-                'password' => substr($usuario->password, 9),
-            ]);
-            $msg = 'Usuario activado correctamente.';
-        } else {
-            $usuario->update([
-                'password' => 'INACTIVO:' . $usuario->password,
-            ]);
-            $msg = 'Usuario desactivado correctamente.';
-        }
+        HistorialService::registrar(
+            accion:         $nuevoEstado === 'activo' ? 'activar' : 'desactivar',
+            modulo:         'usuarios',
+            descripcion:    ucfirst($nuevoEstado === 'activo' ? 'Activó' : 'Desactivó') . ' al usuario: ' . $usuario->nombre_completo,
+            registro_id:    $usuario->id,
+            tabla_afectada: 'usuarios'
+        );
 
         return redirect()->route('admin.usuarios.index')
-            ->with('success', $msg);
+            ->with('success', 'Usuario ' . $nuevoEstado . ' correctamente.');
     }
 
     public function destroy(Usuario $usuario)
@@ -130,6 +119,14 @@ class UsuarioController extends Controller
             return redirect()->route('admin.usuarios.index')
                 ->with('error', 'No puedes eliminar tu propio usuario.');
         }
+
+        HistorialService::registrar(
+            accion:         'eliminar',
+            modulo:         'usuarios',
+            descripcion:    'Eliminó al usuario: ' . $usuario->nombre_completo,
+            registro_id:    $usuario->id,
+            tabla_afectada: 'usuarios'
+        );
 
         $usuario->delete();
 

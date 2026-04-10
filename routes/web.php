@@ -5,11 +5,12 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RolController;
 use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\HistorialAccionController;
+use App\Http\Controllers\ServidorController;
+use App\Http\Controllers\CultoController;
 
-// ── Página inicial ─────────────────────────────────────
 Route::get('/', fn() => redirect()->route('login'));
 
-// ── Autenticación ──────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login',  [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
@@ -19,10 +20,8 @@ Route::post('/logout', [LoginController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
 
-// ── Área privada ───────────────────────────────────────
 Route::middleware('auth')->group(function () {
 
-    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Secretario General
@@ -30,19 +29,52 @@ Route::middleware('auth')->group(function () {
         ->prefix('admin')
         ->name('admin.')
         ->group(function () {
-
-            // Roles
             Route::get('roles',          [RolController::class, 'index'])->name('roles.index');
             Route::post('roles',         [RolController::class, 'store'])->name('roles.store');
             Route::put('roles/{rol}',    [RolController::class, 'update'])->name('roles.update');
             Route::delete('roles/{rol}', [RolController::class, 'destroy'])->name('roles.destroy');
 
-            // Usuarios
             Route::get('usuarios',                    [UsuarioController::class, 'index'])->name('usuarios.index');
             Route::post('usuarios',                   [UsuarioController::class, 'store'])->name('usuarios.store');
             Route::put('usuarios/{usuario}',          [UsuarioController::class, 'update'])->name('usuarios.update');
             Route::patch('usuarios/{usuario}/estado', [UsuarioController::class, 'toggleEstado'])->name('usuarios.estado');
             Route::delete('usuarios/{usuario}',       [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
         });
+
+    // Historial — Secretario y Pastor
+    Route::middleware('rol:secretario_general,pastor')
+        ->name('historial.')
+        ->group(function () {
+            Route::get('historial', [HistorialAccionController::class, 'index'])->name('index');
+        });
+// Servidores — Secretario y Líder
+Route::middleware('rol:secretario_general,lider_comite')
+    ->name('servidores.')
+    ->group(function () {
+        Route::get('servidores',                       [ServidorController::class, 'index'])->name('index');
+        Route::post('servidores',                      [ServidorController::class, 'store'])->name('store');
+        Route::put('servidores/{servidor}',            [ServidorController::class, 'update'])->name('update');
+        Route::patch('servidores/{servidor}/estado',   [ServidorController::class, 'toggleEstado'])->name('estado');
+        Route::delete('servidores/{servidor}',         [ServidorController::class, 'destroy'])->name('destroy');
+    });
+
+
+    // Cultos — Secretario y Líder
+Route::middleware('rol:secretario_general,lider_comite')
+    ->name('cultos.')
+    ->group(function () {
+        Route::get('cultos',                  [CultoController::class, 'index'])->name('index');
+        Route::post('cultos',                 [CultoController::class, 'store'])->name('store');
+        Route::put('cultos/{culto}',          [CultoController::class, 'update'])->name('update');
+        Route::delete('cultos/{culto}',       [CultoController::class, 'destroy'])->name('destroy');
+        Route::get('cultos/{culto}',          [CultoController::class, 'show'])->name('show');
+    });
+
+// Mensaje en culto — Secretario y Pastor
+Route::middleware('rol:secretario_general,pastor')
+    ->group(function () {
+        Route::post('cultos/{culto}/mensaje', [CultoController::class, 'mensaje'])->name('cultos.mensaje');
+    });
+
 
 });
