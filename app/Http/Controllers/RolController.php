@@ -27,7 +27,7 @@ class RolController extends Controller
         $rol = Rol::create([
             'nombre_rol'  => strtolower(trim($request->nombre_rol)),
             'descripcion' => $request->descripcion,
-            'estado'      => 'activo',
+            'estado'      => 1,
         ]);
 
         HistorialService::registrar(
@@ -47,7 +47,7 @@ class RolController extends Controller
         $request->validate([
             'nombre_rol'  => 'required|string|max:100|unique:roles,nombre_rol,' . $rol->id,
             'descripcion' => 'nullable|string|max:255',
-            'estado'      => 'required|in:activo,inactivo',
+            'estado'      => 'required|in:0,1',
         ]);
 
         $rolAnterior = $rol->nombre_rol;

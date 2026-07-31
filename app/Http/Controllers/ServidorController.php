@@ -12,6 +12,7 @@ class ServidorController extends Controller
     public function index()
     {
         $servidores = Servidor::with(['genero', 'ultimaParticipacion.culto'])
+            ->where('estado', 1)
             ->orderBy('nombre_completo')
             ->get();
 
@@ -25,11 +26,15 @@ class ServidorController extends Controller
         $request->validate([
             'nombre_completo' => 'required|string|max:150',
             'telefono'        => 'required|string|max:20',
-            'idgenero'        => 'nullable|exists:genero,id',
+            'idgenero'        => 'nullable|exists:genero,idgenero',
             'cargo'           => 'nullable|string|max:100',
+            'fecha_nacimiento'=> 'required|date|before_or_equal:today',
         ], [
-            'nombre_completo.required' => 'El nombre completo es obligatorio.',
-            'telefono.required'        => 'El teléfono es obligatorio.',
+            'nombre_completo.required'  => 'El nombre completo es obligatorio.',
+            'telefono.required'         => 'El teléfono es obligatorio.',
+            'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
+            'fecha_nacimiento.date'     => 'La fecha de nacimiento debe ser una fecha válida.',
+            'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser futura.',
         ]);
 
         $servidor = Servidor::create([
@@ -37,7 +42,8 @@ class ServidorController extends Controller
             'telefono'        => trim($request->telefono),
             'idgenero'        => $request->idgenero,
             'cargo'           => $request->cargo ? trim($request->cargo) : null,
-            'estado'          => 'activo',
+            'fecha_nacimiento'=> $request->fecha_nacimiento,
+            'estado'          => 1,
         ]);
 
         HistorialService::registrar(
@@ -57,8 +63,16 @@ class ServidorController extends Controller
         $request->validate([
             'nombre_completo' => 'required|string|max:150',
             'telefono'        => 'required|string|max:20',
-            'idgenero'        => 'nullable|exists:genero,id',
+            'idgenero'        => 'nullable|exists:genero,idgenero',
             'cargo'           => 'nullable|string|max:100',
+            'fecha_nacimiento'=> 'required|date|before_or_equal:today',
+        ], [
+            'nombre_completo.required'  => 'El nombre completo es obligatorio.',
+            'telefono.required'         => 'El teléfono es obligatorio.',
+            'idgenero.exists'           => 'El género seleccionado no es válido.',
+            'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
+            'fecha_nacimiento.date'     => 'La fecha de nacimiento debe ser una fecha válida.',
+            'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser futura.',
         ]);
 
         $servidor->update([
@@ -66,6 +80,7 @@ class ServidorController extends Controller
             'telefono'        => trim($request->telefono),
             'idgenero'        => $request->idgenero,
             'cargo'           => $request->cargo ? trim($request->cargo) : null,
+            'fecha_nacimiento'=> $request->fecha_nacimiento,
         ]);
 
         HistorialService::registrar(
@@ -82,19 +97,21 @@ class ServidorController extends Controller
 
     public function toggleEstado(Servidor $servidor)
     {
-        $nuevoEstado = $servidor->estado === 'activo' ? 'inactivo' : 'activo';
+        $nuevoEstado = $servidor->estado === 1 ? 0 : 1;
         $servidor->update(['estado' => $nuevoEstado]);
 
         HistorialService::registrar(
-            accion:         $nuevoEstado === 'activo' ? 'activar' : 'desactivar',
+            accion:         $nuevoEstado === 1 ? 'activar' : 'desactivar',
             modulo:         'servidores',
-            descripcion:    ucfirst($nuevoEstado === 'activo' ? 'Activó' : 'Desactivó') . ' al servidor: ' . $servidor->nombre_completo,
+            descripcion:    ucfirst($nuevoEstado === 1 ? 'Activó' : 'Desactivó') . ' al servidor: ' . $servidor->nombre_completo,
             registro_id:    $servidor->id,
             tabla_afectada: 'servidores'
         );
 
+        $textoEstado = $nuevoEstado === 1 ? 'activo' : 'inactivo';
+
         return redirect()->route('servidores.index')
-            ->with('success', 'Servidor ' . $nuevoEstado . ' correctamente.');
+            ->with('success', 'Servidor ' . $textoEstado . ' correctamente.');
     }
 
     public function destroy(Servidor $servidor)

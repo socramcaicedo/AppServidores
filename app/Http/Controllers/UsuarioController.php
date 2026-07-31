@@ -13,7 +13,7 @@ class UsuarioController extends Controller
     public function index()
     {
         $usuarios = Usuario::with('rol')->orderBy('created_at', 'desc')->get();
-        $roles    = Rol::where('estado', 'activo')->orderBy('nombre_rol')->get();
+        $roles    = Rol::where('estado', true)->orderBy('nombre_rol')->get();
         return view('admin.usuarios.index', compact('usuarios', 'roles'));
     }
 
@@ -37,7 +37,7 @@ class UsuarioController extends Controller
             'genero'   => $request->genero,
             'edad'     => $request->edad,
             'rol_id'   => $request->rol_id,
-            'estado'   => 'activo',
+            'estado'   => 1,
         ]);
 
         HistorialService::registrar(
@@ -98,19 +98,19 @@ class UsuarioController extends Controller
                 ->with('error', 'No puedes desactivarte a ti mismo.');
         }
 
-        $nuevoEstado = $usuario->estado === 'activo' ? 'inactivo' : 'activo';
+        $nuevoEstado = $usuario->estado == 1 ? 0 : 1;
         $usuario->update(['estado' => $nuevoEstado]);
 
         HistorialService::registrar(
-            accion:         $nuevoEstado === 'activo' ? 'activar' : 'desactivar',
+            accion:         $nuevoEstado == 1 ? 'activar' : 'desactivar',
             modulo:         'usuarios',
-            descripcion:    ucfirst($nuevoEstado === 'activo' ? 'Activó' : 'Desactivó') . ' al usuario: ' . $usuario->nombre_completo,
+            descripcion:    ucfirst($nuevoEstado == 1 ? 'Activó' : 'Desactivó') . ' al usuario: ' . $usuario->nombre_completo,
             registro_id:    $usuario->id,
             tabla_afectada: 'usuarios'
         );
 
         return redirect()->route('admin.usuarios.index')
-            ->with('success', 'Usuario ' . $nuevoEstado . ' correctamente.');
+            ->with('success', 'Usuario ' . ($nuevoEstado == 1 ? 'activado' : 'desactivado') . ' correctamente.');
     }
 
     public function destroy(Usuario $usuario)
