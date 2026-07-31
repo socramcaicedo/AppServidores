@@ -21,8 +21,7 @@
 </div>
 <div class="sidebar-section">
     <p class="sidebar-title">Cultos</p>
-    <a href="#"><span class="icono">&#128197;</span> Gestionar cultos</a>
-    <a href="#"><span class="icono">&#43;</span> Nuevo orden</a>
+    <a href="{{ route('cultos.index') }}"><span class="icono">&#128197;</span> Gestionar cultos</a>
 </div>
 @if(auth()->user()->tieneRol('secretario_general'))
 <div class="sidebar-section">
@@ -35,13 +34,13 @@
 @endsection
 
 @section('contenido')
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
-    <div>
+<div class="page-header flex-between" style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
+    <div style="flex:1;">
         <h1>Gestión de Servidores</h1>
         <p>Administra los servidores de la iglesia y su información de contacto</p>
     </div>
     <button class="btn btn-amarillo" onclick="toggleFormulario()">
-        &#43; Nuevo servidor
+        &#43; <span class="hide-mobile">Nuevo servidor</span>
     </button>
 </div>
 
@@ -55,42 +54,57 @@
         <form method="POST" action="{{ route('servidores.store') }}">
             @csrf
             <div class="form-grid-4">
-                <div class="form-group">
+                <div class="form-group" style="grid-column: span 2;">
                     <label>Nombre completo <span class="requerido">*</span></label>
                     <input type="text" name="nombre_completo"
                            value="{{ old('nombre_completo') }}"
                            placeholder="Nombres y apellidos"
-                           class="{{ $errors->has('nombre_completo') ? 'input-error' : '' }}">
+                           class="{{ $errors->has('nombre_completo') ? 'input-error' : '' }} input-touch"
+                           autocomplete="name">
                     @error('nombre_completo')
                         <p class="error-msg">{{ $message }}</p>
                     @enderror
                 </div>
                 <div class="form-group">
                     <label>Teléfono WhatsApp <span class="requerido">*</span></label>
-                    <input type="text" name="telefono"
+                    <input type="tel" name="telefono"
                            value="{{ old('telefono') }}"
                            placeholder="Ej: 573001234567"
-                           class="{{ $errors->has('telefono') ? 'input-error' : '' }}">
+                           class="{{ $errors->has('telefono') ? 'input-error' : '' }} input-touch"
+                           autocomplete="tel">
                     @error('telefono')
                         <p class="error-msg">{{ $message }}</p>
                     @enderror
                 </div>
                 <div class="form-group">
+                    <label>Fecha de nacimiento <span class="requerido">*</span></label>
+                    <input type="date" name="fecha_nacimiento"
+                           value="{{ old('fecha_nacimiento') }}"
+                           max="{{ date('Y-m-d') }}"
+                           class="{{ $errors->has('fecha_nacimiento') ? 'input-error' : '' }} input-touch"
+                           autocomplete="bday">
+                    @error('fecha_nacimiento')
+                        <p class="error-msg">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div class="form-group">
                     <label>Género</label>
-                    <select name="idgenero">
+                    <select name="idgenero" class="input-touch">
                         <option value="">— Seleccionar —</option>
                         @foreach($generos as $g)
-                            <option value="{{ $g->id }}" {{ old('idgenero') == $g->id ? 'selected' : '' }}>
+                            <option value="{{ $g->idgenero }}" {{ old('idgenero') == $g->idgenero ? 'selected' : '' }}>
                                 {{ $g->denominacion }}
                             </option>
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="grid-column: span 2;">
                     <label>Cargo</label>
                     <input type="text" name="cargo"
                            value="{{ old('cargo') }}"
-                           placeholder="Ej: Ujier, Músico (opcional)">
+                           placeholder="Ej: Ujier, Músico (opcional)"
+                           class="input-touch"
+                           autocomplete="organization">
                 </div>
             </div>
             <div class="form-acciones">
@@ -102,138 +116,142 @@
 </div>
 
 {{-- Resumen --}}
-<div class="stats-grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:1.5rem;">
+<div class="stats-grid" style="grid-template-columns:repeat(2,1fr); margin-bottom:1.5rem;">
     <div class="stat-card azul">
-        <span class="stat-label">Total servidores</span>
+        <span class="stat-label">Servidores activos</span>
         <span class="stat-valor">{{ $servidores->count() }}</span>
-        <span class="stat-sub">Registrados en el sistema</span>
+        <span class="stat-sub hide-mobile">Disponibles para servir</span>
     </div>
     <div class="stat-card verde">
-        <span class="stat-label">Activos</span>
-        <span class="stat-valor">{{ $servidores->where('estado','activo')->count() }}</span>
-        <span class="stat-sub">Disponibles para servir</span>
-    </div>
-    <div class="stat-card rojo">
-        <span class="stat-label">Inactivos</span>
-        <span class="stat-valor">{{ $servidores->where('estado','inactivo')->count() }}</span>
-        <span class="stat-sub">Temporalmente inactivos</span>
+        <span class="stat-label">Con participaciones</span>
+        <span class="stat-valor">{{ $servidores->filter(fn($s) => $s->ultimaParticipacion)->count() }}</span>
+        <span class="stat-sub hide-mobile">Han participado al menos una vez</span>
     </div>
 </div>
 
 {{-- Tabla --}}
 <div class="tabla-wrapper">
-    <div class="tabla-header">
-        <h2>Listado de servidores</h2>
-        <span style="font-size:13px; color:#999;">{{ $servidores->count() }} servidores en total</span>
+    <div class="tabla-header flex-between">
+        <div>
+            <h2 class="hide-mobile">Listado de servidores activos</h2>
+            <h2 class="show-mobile">Servidores ({{ $servidores->count() }})</h2>
+        </div>
+        <span style="font-size:13px; color:#999;" class="hide-mobile">{{ $servidores->count() }} servidores disponibles</span>
     </div>
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Nombre completo</th>
-                <th>Cargo</th>
-                <th>Género</th>
-                <th>Teléfono</th>
-                <th>Última participación</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($servidores as $servidor)
-            <tr>
-                <td style="color:#999;">{{ $loop->iteration }}</td>
-                <td>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div class="avatar">
-                            {{ strtoupper(substr($servidor->nombre_completo, 0, 2)) }}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre completo</th>
+                    <th class="hide-mobile">Cargo</th>
+                    <th class="hide-mobile">Género</th>
+                    <th class="hide-mobile">Edad</th>
+                    <th>Estado de uso</th>
+                    <th class="hide-mobile">Última participación</th>
+                    <th>Teléfono</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($servidores as $servidor)
+                <tr>
+                    <td data-label="#" style="color:#999;">{{ $loop->iteration }}</td>
+                    <td data-label="Nombre">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="avatar">
+                                {{ strtoupper(substr($servidor->nombre_completo, 0, 2)) }}
+                            </div>
+                            <div>
+                                <strong>{{ $servidor->nombre_completo }}</strong>
+                                <div class="show-mobile" style="font-size:11px; color:#777; margin-top:2px;">
+                                    {{ $servidor->cargo ?? 'Sin cargo' }}
+                                </div>
+                            </div>
                         </div>
-                        <strong>{{ $servidor->nombre_completo }}</strong>
-                    </div>
-                </td>
-                <td style="color:#555;">{{ $servidor->cargo ?? '—' }}</td>
-                <td>{{ $servidor->genero->denominacion ?? '—' }}</td>
-                <td>
-                    <a href="{{ $servidor->link_whatsapp }}"
-                       target="_blank"
-                       class="btn-whatsapp"
-                       title="Contactar por WhatsApp">
-                        &#128222; {{ $servidor->telefono }}
-                    </a>
-                </td>
-                <td style="font-size:13px; color:#555;">
-                    @if($servidor->ultimaParticipacion)
-                        {{ $servidor->ultimaParticipacion->created_at->isoFormat('D MMM YYYY') }}
-                    @else
-                        <span style="color:#999;">Sin participaciones</span>
-                    @endif
-                </td>
-                <td>
-                    <span class="pill {{ $servidor->estado === 'activo' ? 'pill-activo' : 'pill-inactivo' }}">
-                        {{ ucfirst($servidor->estado) }}
-                    </span>
-                </td>
-                <td>
-                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                        {{-- Editar --}}
-                        <button class="btn btn-primario"
-                                style="padding:5px 10px; font-size:12px;"
-                                onclick="abrirEditar(
-                                    {{ $servidor->id }},
-                                    '{{ addslashes($servidor->nombre_completo) }}',
-                                    '{{ $servidor->telefono }}',
-                                    '{{ $servidor->idgenero }}',
-                                    '{{ addslashes($servidor->cargo ?? '') }}'
-                                )">
-                            Editar
-                        </button>
-
-                        {{-- Activar/Desactivar --}}
-                        <form method="POST" action="{{ route('servidores.estado', $servidor->id) }}">
-                            @csrf @method('PATCH')
-                            <button type="submit"
-                                    class="btn {{ $servidor->estado === 'activo' ? 'btn-secundario' : 'btn-amarillo' }}"
-                                    style="padding:5px 10px; font-size:12px;">
-                                {{ $servidor->estado === 'activo' ? 'Desactivar' : 'Activar' }}
-                            </button>
-                        </form>
-
-                        {{-- Eliminar --}}
-                        @if($servidor->asignaciones()->count() === 0)
-                        <form method="POST" action="{{ route('servidores.destroy', $servidor->id) }}"
-                              onsubmit="return confirm('¿Eliminar a {{ $servidor->nombre_completo }}?')">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-peligro"
-                                    style="padding:5px 10px; font-size:12px;">
-                                Eliminar
-                            </button>
-                        </form>
+                    </td>
+                    <td data-label="Cargo" class="hide-mobile" style="color:#555;">{{ $servidor->cargo ?? '—' }}</td>
+                    <td data-label="Género" class="hide-mobile">{{ $servidor->genero->denominacion ?? '—' }}</td>
+                    <td data-label="Edad" class="hide-mobile" style="color:#555;">
+                        @if($servidor->fecha_nacimiento)
+                            {{ $servidor->edad }} años
                         @else
-                        <button class="btn btn-secundario"
-                                style="padding:5px 10px; font-size:12px; opacity:0.5;"
-                                disabled title="Tiene asignaciones registradas">
-                            Eliminar
-                        </button>
+                            <span style="color:#999;">—</span>
                         @endif
-                    </div>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="8" style="text-align:center; color:#999; padding:2.5rem;">
-                    No hay servidores registrados aún.
-                </td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
+                    </td>
+                    <td data-label="Estado">
+                        <span class="pill" style="background: {{ $servidor->estado_uso_color }}; color: #fff;">
+                            {{ $servidor->estado_uso }}
+                        </span>
+                    </td>
+                    <td data-label="Última participación" class="hide-mobile" style="font-size:13px; color:#555;">
+                        @if($servidor->ultimaParticipacion)
+                            {{ $servidor->ultimaParticipacion->created_at->isoFormat('D MMM YYYY') }}
+                        @else
+                            <span style="color:#999;">Sin participaciones</span>
+                        @endif
+                    </td>
+                    <td data-label="Teléfono">
+                        <a href="{{ $servidor->link_whatsapp }}"
+                           target="_blank"
+                           class="btn-whatsapp btn-touch"
+                           style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px;"
+                           title="Contactar por WhatsApp">
+                            &#128222; <span class="hide-mobile">{{ $servidor->telefono }}</span>
+                        </a>
+                    </td>
+                    <td data-label="Acciones">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap; flex-direction:column;" class="btn-group">
+                            {{-- Editar --}}
+                            <button class="btn btn-primario btn-touch"
+                                    onclick="abrirEditar(
+                                        {{ $servidor->id }},
+                                        '{{ addslashes(e($servidor->nombre_completo)) }}',
+                                        '{{ addslashes(e($servidor->telefono)) }}',
+                                        '{{ $servidor->idgenero }}',
+                                        '{{ addslashes(e($servidor->cargo ?? '')) }}',
+                                        '{{ $servidor->fecha_nacimiento ? $servidor->fecha_nacimiento->format('Y-m-d') : '' }}'
+                                    )">
+                                ✏️ Editar
+                            </button>
+
+                            {{-- Eliminar — Solo Secretario General --}}
+                            @if(auth()->user()->tieneRol('secretario_general'))
+                                @if($servidor->asignaciones()->count() === 0)
+                                <form method="POST" action="{{ route('servidores.destroy', $servidor->id) }}"
+                                      onsubmit="return confirm('¿Eliminar a {{ addslashes(e($servidor->nombre_completo)) }}?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-peligro btn-touch">
+                                        🗑️ Eliminar
+                                    </button>
+                                </form>
+                                @else
+                                <button class="btn btn-secundario btn-touch"
+                                        disabled title="Tiene asignaciones registradas">
+                                    🔒 No disponible
+                                </button>
+                                @endif
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="9" style="text-align:center; color:#999; padding:2.5rem;">
+                        No hay servidores registrados aún.
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {{-- Modal de edición --}}
 <div id="modal-editar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45);
      z-index:999; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; padding:2rem; width:100%;
-                max-width:520px; border-top:4px solid #1A4FA8;">
+                max-width:520px; border-top:4px solid #1A4FA8; max-height:90vh; overflow-y:auto;">
         <div class="form-card-header" style="margin-bottom:1.25rem;">
             <h2 style="font-size:16px; color:#0D2F6E;">Editar servidor</h2>
             <button onclick="cerrarEditar()" class="btn-cerrar">&#10005;</button>
@@ -243,24 +261,28 @@
             <div class="form-grid-4" style="margin-bottom:1rem;">
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Nombre completo <span class="requerido">*</span></label>
-                    <input type="text" name="nombre_completo" id="edit-nombre" placeholder="Nombres y apellidos">
+                    <input type="text" name="nombre_completo" id="edit-nombre" placeholder="Nombres y apellidos" class="input-touch" autocomplete="name">
                 </div>
                 <div class="form-group">
                     <label>Teléfono <span class="requerido">*</span></label>
-                    <input type="text" name="telefono" id="edit-telefono" placeholder="573001234567">
+                    <input type="tel" name="telefono" id="edit-telefono" placeholder="573001234567" class="input-touch" autocomplete="tel">
+                </div>
+                <div class="form-group">
+                    <label>Fecha de nacimiento <span class="requerido">*</span></label>
+                    <input type="date" name="fecha_nacimiento" id="edit-fecha-nacimiento" max="{{ date('Y-m-d') }}" class="input-touch" autocomplete="bday">
                 </div>
                 <div class="form-group">
                     <label>Género</label>
-                    <select name="idgenero" id="edit-genero">
+                    <select name="idgenero" id="edit-genero" class="input-touch">
                         <option value="">— Seleccionar —</option>
                         @foreach($generos as $g)
-                            <option value="{{ $g->id }}">{{ $g->denominacion }}</option>
+                            <option value="{{ $g->idgenero }}">{{ $g->denominacion }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Cargo</label>
-                    <input type="text" name="cargo" id="edit-cargo" placeholder="Ej: Ujier, Músico (opcional)">
+                    <input type="text" name="cargo" id="edit-cargo" placeholder="Ej: Ujier, Músico (opcional)" class="input-touch" autocomplete="organization">
                 </div>
             </div>
             <div class="form-acciones">
@@ -293,7 +315,7 @@
     .form-group { display: flex; flex-direction: column; gap: 5px; }
     label { font-size: 13px; font-weight: 600; color: #3a4255; }
     .requerido { color: #C0392B; }
-    input[type="text"], select {
+    input[type="text"], input[type="tel"], input[type="date"], select {
         padding: 9px 12px; border: 1px solid #D1DCF0; border-radius: 7px;
         font-size: 14px; color: #1a1a2e; outline: none;
         transition: border-color 0.2s; width: 100%;
@@ -308,18 +330,70 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 12px; font-weight: 700; flex-shrink: 0;
     }
+
+    /* Inputs touch-friendly */
+    .input-touch {
+        padding: 12px 14px;
+        font-size: 16px;
+        min-height: 48px;
+    }
+
+    /* Ajustes del grid en móvil */
+    @media (max-width: 900px) {
+        .form-grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .form-grid-4 {
+            grid-template-columns: 1fr;
+        }
+
+        .form-acciones {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-acciones .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Modal responsive */
+        #modal-editar > div {
+            margin: 0.75rem;
+            max-width: calc(100% - 1.5rem) !important;
+        }
+        #modal-editar .btn-cerrar {
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #modal-editar .form-grid-4 { grid-template-columns: 1fr; }
+        #modal-editar input[type="text"],
+        #modal-editar input[type="tel"],
+        #modal-editar input[type="date"],
+        #modal-editar select {
+            font-size: 16px !important;
+        }
+        #modal-editar .form-acciones {
+            flex-direction: column;
+        }
+        #modal-editar .form-acciones .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
     .btn-whatsapp {
         display: inline-flex; align-items: center; gap: 4px;
         color: #1A7A4A; font-size: 13px; text-decoration: none;
         font-weight: 500; transition: opacity 0.15s;
     }
     .btn-whatsapp:hover { opacity: 0.75; }
-    @media (max-width: 900px) {
-        .form-grid-4 { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 500px) {
-        .form-grid-4 { grid-template-columns: 1fr; }
-    }
 </style>
 
 <script>
@@ -330,11 +404,12 @@
         if (!visible) document.querySelector('[name="nombre_completo"]').focus();
     }
 
-    function abrirEditar(id, nombre, telefono, generoId, cargo) {
+    function abrirEditar(id, nombre, telefono, generoId, cargo, fechaNacimiento) {
         document.getElementById('form-editar').action = '/servidores/' + id;
         document.getElementById('edit-nombre').value   = nombre;
         document.getElementById('edit-telefono').value = telefono;
         document.getElementById('edit-cargo').value    = cargo;
+        document.getElementById('edit-fecha-nacimiento').value = fechaNacimiento || '';
         if (generoId) document.getElementById('edit-genero').value = generoId;
         document.getElementById('modal-editar').style.display = 'flex';
     }
@@ -349,6 +424,11 @@
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') cerrarEditar();
+    });
+
+    // Cerrar modal al tocar fuera
+    document.getElementById('modal-editar').addEventListener('click', function(e) {
+        if (e.target === this) cerrarEditar();
     });
 </script>
 @endsection

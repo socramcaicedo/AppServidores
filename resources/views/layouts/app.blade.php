@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/LOGO3.jpeg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/LOGO3.jpeg') }}">
     <title>@yield('titulo', 'Gestión de Servidores')</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,6 +59,15 @@
             align-items: center;
             justify-content: center;
             font-size: 18px;
+        }
+
+        .navbar-brand .logo-ipuc {
+            width: 45px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 50%; /* ← Hace que sea circular */
+            border: 2px solid var(--amarillo); /* ← Borde amarillo opcional */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* ← Sombra suave */
         }
 
         .navbar-brand span {
@@ -166,6 +177,17 @@
         .main {
             flex: 1;
             padding: 2rem;
+        }
+
+        /* Vista de estadísticas - más compacta */
+        .main.estadisticas-view {
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .main.estadisticas-view {
+                padding: 1rem;
+            }
         }
 
         .page-header {
@@ -320,30 +342,46 @@
         .pill-inactivo { background: #fdf0ef; color: var(--rojo); }
         .pill-pendiente { background: var(--amarillo-suave); color: #8a6200; }
     </style>
+
+    <!-- CSS Responsivo para móviles y tablets -->
+    <link href="{{ asset('css/responsive.css') }}" rel="stylesheet">
 </head>
 <body>
 
 <nav class="navbar">
+    <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
     <a href="{{ route('dashboard') }}" class="navbar-brand">
-        <div class="icono-iglesia">&#9765;</div>
-        <span>Gestión de Servidores</span>
+        <img src="{{ asset('images/LOGO3.jpeg') }}"
+             alt="Logo IPUC"
+             class="logo-ipuc">
+        <span class="hide-mobile">Gestión de Servidores</span>
     </a>
     <div class="navbar-user">
-        <span>{{ auth()->user()->nombre_completo }}</span>
+        <span class="hide-mobile">{{ auth()->user()->nombre_completo }}</span>
         <span class="badge-rol">{{ auth()->user()->rol->nombre_rol ?? 'Sin rol' }}</span>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="btn-logout">Cerrar sesión</button>
+            <button type="submit" class="btn-logout hide-mobile">Cerrar sesión</button>
+            <button type="submit" class="btn-logout show-mobile" aria-label="Cerrar sesión">
+                &#10005;
+            </button>
         </form>
     </div>
 </nav>
+
+<!-- Overlay oscuro para móvil -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
 
 <div class="layout">
     <aside class="sidebar">
         @yield('sidebar')
     </aside>
 
-    <main class="main">
+    <main class="main @yield('main-class')">
         @if(session('error'))
             <div class="alert alert-error">{{ session('error') }}</div>
         @endif
@@ -354,6 +392,105 @@
         @yield('contenido')
     </main>
 </div>
+
+<script>
+    // ============================================
+    // MENÚ HAMBURGUESA PARA MÓVIL
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        // Abrir/cerrar menú
+        function toggleMenu() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            hamburgerBtn.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        }
+
+        // Event listeners
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', toggleMenu);
+        }
+
+        if (overlay) {
+            overlay.addEventListener('click', toggleMenu);
+        }
+
+        // Cerrar menú al hacer click en un enlace
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 768) {
+                    toggleMenu();
+                }
+            });
+        });
+
+        // Cerrar menú al cambiar tamaño de pantalla
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                hamburgerBtn.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Cerrar menú con tecla Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                toggleMenu();
+            }
+        });
+
+        // ============================================
+        // RESTAURAR POSICIÓN DEL SCROLL AL NAVEGAR
+        // ============================================
+        const sidebarLinksList = document.querySelectorAll('.sidebar a');
+        sidebarLinksList.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // No prevenir navegación, solo guardar posición
+                sessionStorage.setItem('scrollPosition', window.pageYOffset);
+            });
+        });
+
+        // Restaurar scroll si existe
+        if (sessionStorage.getItem('scrollPosition')) {
+            window.scrollTo(0, parseInt(sessionStorage.getItem('scrollPosition')));
+            sessionStorage.removeItem('scrollPosition');
+        }
+
+        // ============================================
+        // AJUSTAR TABLAS EN MÓVIL (OPCIONAL)
+        // ============================================
+        // Descomenta si quieres que las tablas se conviertan en cards en móvil
+        /*
+        function adjustTablesForMobile() {
+            if (window.innerWidth < 576) {
+                document.querySelectorAll('.tabla-wrapper table').forEach(table => {
+                    table.classList.add('table-cards-mobile');
+                    table.querySelectorAll('td').forEach(td => {
+                        const th = table.querySelector('th');
+                        if (th) {
+                            td.setAttribute('data-label', th.textContent);
+                        }
+                    });
+                });
+            } else {
+                document.querySelectorAll('.table-cards-mobile').forEach(table => {
+                    table.classList.remove('table-cards-mobile');
+                });
+            }
+        }
+
+        adjustTablesForMobile();
+        window.addEventListener('resize', adjustTablesForMobile);
+        */
+    });
+</script>
 
 </body>
 </html>

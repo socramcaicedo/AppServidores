@@ -75,7 +75,7 @@
     <div class="stat-card verde">
         <span class="stat-label">Este mes</span>
         <span class="stat-valor">{{ \App\Models\HistorialAccion::whereMonth('fecha_accion', now()->month)->count() }}</span>
-        <span class="stat-sub">{{ now()->isoFormat('MMMM YYYY') }}</span>
+        <span class="stat-sub">{{ now()->locale('es')->isoFormat('MMMM YYYY') }}</span>
     </div>
 </div>
 
@@ -104,9 +104,9 @@
             @forelse($acciones as $accion)
             <tr>
                 <td style="white-space:nowrap; color:#555;">
-                    {{ $accion->fecha_accion?->format('d/m/Y') }}
+                    {{ $accion->fecha_accion?->isoFormat('D [de] MMM [de] YYYY') }}
                     <span style="color:#999; font-size:12px;">
-                        {{ $accion->fecha_accion?->format('H:i') }}
+                        {{ $accion->fecha_accion?->format('g:i A') }}
                     </span>
                 </td>
                 <td>

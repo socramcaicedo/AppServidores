@@ -118,8 +118,8 @@
                     </span>
                 </td>
                 <td>
-                    <span class="pill {{ $rol->estado === 'activo' ? 'pill-activo' : 'pill-inactivo' }}">
-                        {{ ucfirst($rol->estado) }}
+                    <span class="pill {{ $rol->estado == 1 ? 'pill-activo' : 'pill-inactivo' }}">
+                        {{ $rol->estado == 1 ? 'Activo' : 'Inactivo' }}
                     </span>
                 </td>
                 <td>
@@ -128,7 +128,7 @@
                         <button
                             class="btn btn-primario"
                             style="padding:5px 10px; font-size:12px;"
-                            onclick="abrirEditar({{ $rol->id }}, '{{ $rol->nombre_rol }}', '{{ $rol->descripcion }}', '{{ $rol->estado }}')"
+                            onclick="abrirEditar({{ $rol->id }}, '{{ addslashes(e($rol->nombre_rol)) }}', '{{ addslashes(e($rol->descripcion ?? '')) }}', '{{ $rol->estado }}')"
                         >
                             Editar
                         </button>
@@ -136,7 +136,7 @@
                         {{-- Botón eliminar --}}
                         @if($rol->usuarios_count === 0)
                         <form method="POST" action="{{ route('admin.roles.destroy', $rol->id) }}"
-                              onsubmit="return confirm('¿Eliminar el rol {{ $rol->nombre_rol }}?')">
+                              onsubmit="return confirm('¿Eliminar el rol {{ addslashes(e($rol->nombre_rol)) }}?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-peligro" style="padding:5px 10px; font-size:12px;">
@@ -164,7 +164,7 @@
 
 {{-- Modal de edición --}}
 <div id="modal-editar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:12px; padding:2rem; width:100%; max-width:480px; border-top:4px solid #1A4FA8;">
+    <div style="background:#fff; border-radius:12px; padding:2rem; width:100%; max-width:480px; border-top:4px solid #1A4FA8; max-height:90vh; overflow-y:auto;">
         <div class="form-card-header" style="margin-bottom:1.25rem;">
             <h2 style="font-size:16px; color:#0D2F6E;">Editar rol</h2>
             <button onclick="cerrarEditar()" class="btn-cerrar">&#10005;</button>
@@ -183,8 +183,8 @@
             <div class="form-group" style="margin-bottom:1.5rem;">
                 <label>Estado</label>
                 <select name="estado" id="edit-estado">
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
+                    <option value="1">Activo</option>
+                    <option value="0">Inactivo</option>
                 </select>
             </div>
             <div class="form-acciones">
@@ -270,6 +270,30 @@
 
     @media (max-width: 600px) {
         .form-grid { grid-template-columns: 1fr; }
+
+        /* Modal responsive */
+        #modal-editar > div {
+            margin: 0.75rem;
+            max-width: calc(100% - 1.5rem) !important;
+        }
+        #modal-editar .btn-cerrar {
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #modal-editar input[type="text"],
+        #modal-editar select {
+            font-size: 16px !important;
+        }
+        #modal-editar .form-acciones {
+            flex-direction: column;
+        }
+        #modal-editar .form-acciones .btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 
@@ -306,6 +330,11 @@
     // Cerrar modal con Escape
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') cerrarEditar();
+    });
+
+    // Cerrar modal al tocar fuera
+    document.getElementById('modal-editar').addEventListener('click', function(e) {
+        if (e.target === this) cerrarEditar();
     });
 </script>
 @endsection

@@ -156,8 +156,8 @@
                 <td>{{ ucfirst($u->genero) }}</td>
                 <td>{{ $u->edad }} años</td>
                 <td>
-                    <span class="pill {{ $u->estado === 'activo' ? 'pill-activo' : 'pill-inactivo' }}">
-                        {{ ucfirst($u->estado) }}
+                    <span class="pill {{ $u->estado == 1 ? 'pill-activo' : 'pill-inactivo' }}">
+                        {{ $u->estado == 1 ? 'Activo' : 'Inactivo' }}
                     </span>
                 </td>
                 <td>
@@ -166,10 +166,10 @@
                         <button class="btn btn-primario" style="padding:5px 10px; font-size:12px;"
                             onclick="abrirEditar(
                                 {{ $u->id }},
-                                '{{ $u->nombre }}',
-                                '{{ $u->apellido }}',
-                                '{{ $u->usuario }}',
-                                '{{ $u->genero }}',
+                                '{{ addslashes(e($u->nombre)) }}',
+                                '{{ addslashes(e($u->apellido)) }}',
+                                '{{ addslashes(e($u->usuario)) }}',
+                                '{{ addslashes(e($u->genero)) }}',
                                 {{ $u->edad }},
                                 {{ $u->rol_id ?? 'null' }}
                             )">
@@ -180,15 +180,15 @@
                         @if($u->id !== auth()->id())
                         <form method="POST" action="{{ route('admin.usuarios.estado', $u->id) }}">
                             @csrf @method('PATCH')
-                            <button type="submit" class="btn {{ $u->estado === 'activo' ? 'btn-secundario' : 'btn-amarillo' }}"
+                            <button type="submit" class="btn {{ $u->estado == 1 ? 'btn-secundario' : 'btn-amarillo' }}"
                                     style="padding:5px 10px; font-size:12px;">
-                                {{ $u->estado === 'activo' ? 'Desactivar' : 'Activar' }}
+                                {{ $u->estado == 1 ? 'Desactivar' : 'Activar' }}
                             </button>
                         </form>
 
                         {{-- Eliminar --}}
                         <form method="POST" action="{{ route('admin.usuarios.destroy', $u->id) }}"
-                              onsubmit="return confirm('¿Eliminar al usuario {{ $u->nombre_completo }}? Esta acción no se puede deshacer.')">
+                              onsubmit="return confirm('¿Eliminar al usuario {{ addslashes(e($u->nombre_completo)) }}? Esta acción no se puede deshacer.')">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-peligro" style="padding:5px 10px; font-size:12px;">
                                 Eliminar
@@ -320,6 +320,34 @@
     @media (max-width: 480px) {
         .form-grid-3 { grid-template-columns: 1fr; }
     }
+
+    /* Modal responsive */
+    @media (max-width: 600px) {
+        #modal-editar > div {
+            margin: 0.75rem;
+            max-width: calc(100% - 1.5rem) !important;
+        }
+        #modal-editar .btn-cerrar {
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #modal-editar input[type="text"],
+        #modal-editar input[type="password"],
+        #modal-editar input[type="number"],
+        #modal-editar select {
+            font-size: 16px !important;
+        }
+        #modal-editar .form-acciones {
+            flex-direction: column;
+        }
+        #modal-editar .form-acciones .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 </style>
 
 <script>
@@ -351,6 +379,11 @@
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') cerrarEditar();
+    });
+
+    // Cerrar modal al tocar fuera
+    document.getElementById('modal-editar').addEventListener('click', function(e) {
+        if (e.target === this) cerrarEditar();
     });
 </script>
 @endsection

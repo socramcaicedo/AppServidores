@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/LOGO3.jpeg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/LOGO3.jpeg') }}">
     <title>Iniciar Sesión</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -34,14 +39,22 @@
         }
 
         .logo-circulo {
-            width: 64px;
-            height: 64px;
+            width: 80px;
+            height: 80px;
             background: #F5C518;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 30px;
+            overflow: hidden;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .logo-circulo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .login-logo h1 {
@@ -147,13 +160,27 @@
 
 <div class="login-wrapper">
     <div class="login-logo">
-        <div class="logo-circulo">&#9765;</div>
+        <div class="logo-circulo">
+            <img src="{{ asset('images/LOGO3.jpeg') }}" alt="Logo IPUC">
+        </div>
         <h1>Gestión de Servidores</h1>
         <p>Sistema de coordinación de cultos</p>
     </div>
 
     <div class="login-card">
         <h2>Iniciar Sesión</h2>
+
+        @if(session('success'))
+        <div style="background: #edfaf3; border: 1px solid #1A7A4A; border-radius: 8px; padding: 12px 16px; margin-bottom: 1rem; color: #1A7A4A; font-size: 14px;">
+            {{ session('success') }}
+        </div>
+        @endif
+
+        @if(session('error'))
+        <div style="background: #fdf0ef; border: 1px solid #C0392B; border-radius: 8px; padding: 12px 16px; margin-bottom: 1rem; color: #C0392B; font-size: 14px;">
+            {{ session('error') }}
+        </div>
+        @endif
 
         <form method="POST" action="{{ route('login') }}">
             @csrf
@@ -199,6 +226,56 @@
 
     <p class="login-footer">Solo personal autorizado de la iglesia</p>
 </div>
+
+<script>
+    // Prevenir el error 419 (CSRF expirado) cuando la pestaña del login
+    // lleva mucho tiempo abierta. Si al pulsar "Ingresar" han pasado más
+    // de 25 minutos desde que se cargó la página, refrescamos primero
+    // para renovar el token CSRF. El usuario tendrá que reescribir su
+    // contraseña, pero no verá la página en blanco del error 419.
+    (function () {
+        const cargadoEn = Date.now();
+        const UMBRAL_MS = 25 * 60 * 1000; // 25 minutos
+
+        const form = document.querySelector('form');
+        if (!form) return;
+
+        form.addEventListener('submit', function (e) {
+            const inactivo = Date.now() - cargadoEn;
+            if (inactivo > UMBRAL_MS) {
+                e.preventDefault();
+
+                // Guardar el usuario para restaurarlo tras la recarga
+                const usuario = document.querySelector('[name="usuario"]')?.value || '';
+                if (usuario) {
+                    try { sessionStorage.setItem('login_usuario_pendiente', usuario); } catch (_) {}
+                }
+
+                // Feedback visual breve antes de recargar
+                const btn = form.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Actualizando sesión...';
+                }
+
+                window.location.reload();
+            }
+        });
+
+        // Restaurar el nombre de usuario si venimos de un refresco preventivo
+        try {
+            const pendiente = sessionStorage.getItem('login_usuario_pendiente');
+            if (pendiente) {
+                const inputUsuario = document.querySelector('[name="usuario"]');
+                if (inputUsuario) inputUsuario.value = pendiente;
+                sessionStorage.removeItem('login_usuario_pendiente');
+                // Enfocar contraseña para que el usuario termine de completar rápido
+                const inputPassword = document.querySelector('[name="password"]');
+                if (inputPassword) inputPassword.focus();
+            }
+        } catch (_) {}
+    })();
+</script>
 
 </body>
 </html>
