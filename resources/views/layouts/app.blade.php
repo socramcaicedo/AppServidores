@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/jpeg" href="{{ asset('images/LOGO3.jpeg') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/LOGO3.jpeg') }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#0D2F6E">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="App IPUC">
+    <meta name="application-name" content="App IPUC">
     <title>@yield('titulo', 'Gestión de Servidores')</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -490,6 +497,14 @@
         window.addEventListener('resize', adjustTablesForMobile);
         */
     });
+</script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('/sw.js').catch(function () {});
+        });
+    }
 </script>
 
 </body>
