@@ -11,6 +11,7 @@ class UsuarioUserProvider extends EloquentUserProvider
     {
         return $this->createModel()
             ->where('usuario', $credentials['usuario'])
+            ->where('estado', 1)
             ->first();
     }
 
