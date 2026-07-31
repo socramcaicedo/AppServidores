@@ -10,15 +10,21 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── Roles ─────────────────────────────────────────
-        DB::table('roles')->insertOrIgnore([
-            ['nombre_rol' => 'secretario', 'descripcion' => 'Administrador general', 'estado' => 'activo'],
-            ['nombre_rol' => 'lider',      'descripcion' => 'Líder de comité',        'estado' => 'activo'],
-            ['nombre_rol' => 'pastor',     'descripcion' => 'Supervisión pastoral',   'estado' => 'activo'],
+        // ── Géneros ────────────────────────────────────────
+        DB::table('genero')->insertOrIgnore([
+            ['denominacion' => 'Masculino'],
+            ['denominacion' => 'Femenino'],
         ]);
 
-        $idSecretario = DB::table('roles')->where('nombre_rol', 'secretario')->value('id');
-        $idLider      = DB::table('roles')->where('nombre_rol', 'lider')->value('id');
+        // ── Roles ─────────────────────────────────────────
+        DB::table('roles')->insertOrIgnore([
+            ['nombre_rol' => 'secretario_general', 'descripcion' => 'Administrador general', 'estado' => 1],
+            ['nombre_rol' => 'lider_comite',       'descripcion' => 'Líder de comité',        'estado' => 1],
+            ['nombre_rol' => 'pastor',             'descripcion' => 'Supervisión pastoral',   'estado' => 1],
+        ]);
+
+        $idSecretario = DB::table('roles')->where('nombre_rol', 'secretario_general')->value('id');
+        $idLider      = DB::table('roles')->where('nombre_rol', 'lider_comite')->value('id');
         $idPastor     = DB::table('roles')->where('nombre_rol', 'pastor')->value('id');
 
         // ── Permisos ───────────────────────────────────────
@@ -69,10 +75,12 @@ class DatabaseSeeder extends Seeder
                 'nombre'     => 'Carlos',
                 'apellido'   => 'Ramírez',
                 'usuario'    => 'secretario',
+                'email'      => 'secretario@ipuc.com',
                 'password'   => Hash::make('password123'),
                 'genero'     => 'masculino',
                 'edad'       => 35,
                 'rol_id'     => $idSecretario,
+                'estado'     => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -80,10 +88,12 @@ class DatabaseSeeder extends Seeder
                 'nombre'     => 'Ana',
                 'apellido'   => 'Gómez',
                 'usuario'    => 'lider',
+                'email'      => 'lider@ipuc.com',
                 'password'   => Hash::make('password123'),
                 'genero'     => 'femenino',
                 'edad'       => 28,
                 'rol_id'     => $idLider,
+                'estado'     => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -91,10 +101,12 @@ class DatabaseSeeder extends Seeder
                 'nombre'     => 'Roberto',
                 'apellido'   => 'Torres',
                 'usuario'    => 'pastor',
+                'email'      => 'pastor@ipuc.com',
                 'password'   => Hash::make('password123'),
                 'genero'     => 'masculino',
                 'edad'       => 50,
                 'rol_id'     => $idPastor,
+                'estado'     => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

@@ -8,6 +8,8 @@ class Genero extends Model
 {
     protected $table = 'genero';
 
+    protected $primaryKey = 'idgenero';
+
     protected $fillable = ['denominacion'];
 
     public function servidores()

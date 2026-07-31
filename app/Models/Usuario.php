@@ -9,34 +9,29 @@ class Usuario extends Authenticatable
 {
     use Notifiable;
 
-    // Apuntar a tu tabla propia
     protected $table = 'usuarios';
 
-   protected $fillable = [
-    'nombre',
-    'apellido',
-    'usuario',
-    'password',
-    'email',
-    'genero',
-    'edad',
-    'rol_id',
-    'estado',       // ← agregar esta línea
-];
+    protected $fillable = [
+        'nombre',
+        'apellido',
+        'usuario',
+        'password',
+        'email',
+        'genero',
+        'edad',
+        'rol_id',
+        'estado',
+    ];
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    // ── Relaciones ──────────────────────────────────────
-
     public function rol()
     {
         return $this->belongsTo(Rol::class, 'rol_id');
     }
-
-    // ── Helpers de rol ──────────────────────────────────
 
     public function tieneRol(string $nombreRol): bool
     {
@@ -56,32 +51,4 @@ class Usuario extends Authenticatable
     {
         return $this->nombre . ' ' . $this->apellido;
     }
-
-public function login(Request $request)
-{
-    $request->validate([
-        'usuario'  => 'required|string',
-        'password' => 'required|string',
-    ]);
-
-    // ↓ La clave del array debe ser el nombre exacto de la columna en BD
-    $credenciales = [
-        'usuario'  => $request->usuario,
-        'password' => $request->password,
-    ];
-
-    if (Auth::attempt($credenciales, $request->boolean('remember'))) {
-        $request->session()->regenerate();
-        return redirect()->intended(route('dashboard'));
-    }
-
-    return back()
-        ->withInput($request->only('usuario'))
-        ->withErrors(['usuario' => 'Usuario o contraseña incorrectos.']);
-}
-
-
-
-
-
 }
