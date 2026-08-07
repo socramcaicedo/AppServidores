@@ -6,12 +6,13 @@
  * IMPORTANTE: al deployar cambios en CSS/JS hay que subir CACHE_VERSION
  * para que se limpie la cache vieja en los dispositivos.
  */
-const CACHE_VERSION = 'ipuc-shell-v1-20260730';
+const CACHE_VERSION = 'ipuc-shell-v2-20260807';
 const CACHE_NAME = CACHE_VERSION;
 
 const PRECACHE_URLS = [
     '/',
     '/manifest.json',
+    '/offline.html',
     '/images/LOGO3.jpeg',
     '/images/icon-192.png',
     '/images/icon-512.png',
@@ -83,6 +84,12 @@ async function networkFirst(req) {
         }
         return res;
     } catch (err) {
+        // Navegación fallida → página offline dedicada
+        if (req.mode === 'navigate') {
+            const offline = await cache.match('/offline.html');
+            if (offline) return offline;
+        }
+        // Sub-recursos y otros → cache específico, luego fallback a /
         const cached = await cache.match(req);
         return cached || caches.match('/');
     }
