@@ -23,3 +23,11 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# PWA: no cachear el Service Worker ni la página offline
+# (para que el navegador siempre revalide estos archivos y se actualicen sin esperar al HTTP cache)
+<IfModule mod_headers.c>
+    <FilesMatch "^(sw\.js|offline\.html)$">
+        Header set Cache-Control "no-cache, no-transform"
+    </FilesMatch>
+</IfModule>
