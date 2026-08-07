@@ -348,6 +348,42 @@
         .pill-activo   { background: #edfaf3; color: var(--verde); }
         .pill-inactivo { background: #fdf0ef; color: var(--rojo); }
         .pill-pendiente { background: var(--amarillo-suave); color: #8a6200; }
+
+        /* Botón Instalar app (PWA) */
+        .btn-instalar {
+            background: var(--amarillo);
+            color: var(--azul-oscuro);
+            border: none;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            margin-right: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: opacity .15s;
+        }
+        .btn-instalar:hover { opacity: .85; }
+        .btn-instalar[hidden] { display: none !important; }
+
+        /* Toast de nueva versión disponible */
+        .toast-actualizacion {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 14px rgba(0,0,0,.2);
+            animation: fadeIn .25s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
     </style>
 
     <!-- CSS Responsivo para móviles y tablets -->
@@ -367,6 +403,7 @@
              class="logo-ipuc">
         <span class="hide-mobile">Gestión de Servidores</span>
     </a>
+    <button id="btn-instalar" type="button" class="btn-instalar" hidden>⬇ Instalar app</button>
     <div class="navbar-user">
         <span class="hide-mobile">{{ auth()->user()->nombre_completo }}</span>
         <span class="badge-rol">{{ auth()->user()->rol->nombre_rol ?? 'Sin rol' }}</span>
@@ -500,11 +537,49 @@
 </script>
 
 <script>
+    // Registro del Service Worker + aviso de nueva versión
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
             navigator.serviceWorker.register('/sw.js').catch(function () {});
         });
+
+        // Auto-reload cuando el SW toma control tras una actualización
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+            if (refreshing) return;
+            refreshing = true;
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success toast-actualizacion';
+            toast.textContent = 'Nueva versión disponible. Recargando…';
+            document.body.appendChild(toast);
+            setTimeout(function () { window.location.reload(); }, 1200);
+        });
     }
+
+    // Botón Instalar app (beforeinstallprompt)
+    (function () {
+        let deferredPrompt = null;
+        const btn = document.getElementById('btn-instalar');
+        if (!btn) return;
+
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            btn.hidden = false;
+        });
+
+        btn.addEventListener('click', async function () {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            btn.hidden = true;
+        });
+
+        window.addEventListener('appinstalled', function () {
+            btn.hidden = true;
+        });
+    })();
 </script>
 
 </body>
