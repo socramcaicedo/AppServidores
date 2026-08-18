@@ -215,8 +215,14 @@ class CultoController extends Controller
     {
         $culto->load(['asignaciones.servidor', 'mensajeAutor']);
 
-        // Filtrar asignaciones reemplazadas para que la vista solo vea las activas
-        $culto->setRelation('asignaciones', $culto->asignaciones->where('estado', 'asignado'));
+        // Filtrar asignaciones reemplazadas y ordenarlas según el orden del culto (primero a último)
+        $culto->setRelation(
+            'asignaciones',
+            $culto->asignaciones
+                ->where('estado', 'asignado')
+                ->sortBy([['orden', 'asc'], ['id', 'asc']])
+                ->values()
+        );
         $servidores = Servidor::where('estado', 1)
             ->with('genero')
             ->withCount('asignacionesActivas')

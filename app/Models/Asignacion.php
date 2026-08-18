@@ -17,6 +17,7 @@ class Asignacion extends Model
         'motivo_reemplazo',
         'motivo_descripcion',
         'reemplazado_por_id',
+        'orden',
     ];
 
     protected $casts = [

@@ -47,6 +47,7 @@ class AsignacionController extends Controller
             'rol_servicio' => ucfirst(trim($request->rol_servicio)),
             'estado' => 'asignado',
             'confirmado' => false,
+            'orden' => ($culto->asignaciones()->max('orden') ?? 0) + 1,
         ]);
 
         HistorialService::registrar(
@@ -167,6 +168,7 @@ class AsignacionController extends Controller
         ]);
 
         // PASO 7: Crear la nueva asignación vinculada al reemplazo
+        // (hereda el orden del reemplazado para conservar su puesto en el culto)
         Asignacion::create([
             'culto_id' => $culto->id,
             'servidor_id' => $request->nuevo_servidor_id,
@@ -174,6 +176,7 @@ class AsignacionController extends Controller
             'estado' => 'asignado',
             'confirmado' => false,
             'reemplazado_por_id' => $asignacion->id,
+            'orden' => $asignacion->orden,
         ]);
 
         // PASO 8: Registrar en el historial
