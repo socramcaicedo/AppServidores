@@ -85,6 +85,7 @@ Route::middleware(['rol:secretario_general,lider_comite', 'prevent.back'])
     ->group(function () {
         Route::post('cultos/{culto}/asignaciones',                          [AsignacionController::class, 'store'])->name('asignaciones.store');
         Route::post('cultos/{culto}/asignaciones/{asignacion}/reemplazar', [AsignacionController::class, 'reemplazar'])->name('asignaciones.reemplazar');
+        Route::patch('cultos/{culto}/asignaciones/{asignacion}/mover', [AsignacionController::class, 'mover'])->name('asignaciones.mover');
         Route::patch('cultos/{culto}/asignaciones/{asignacion}/confirmar',  [AsignacionController::class, 'toggleConfirmado'])->name('asignaciones.confirmar');
         Route::delete('cultos/{culto}/asignaciones/{asignacion}',           [AsignacionController::class, 'destroy'])->name('asignaciones.destroy');
     });

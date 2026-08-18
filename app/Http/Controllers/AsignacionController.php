@@ -89,6 +89,55 @@ class AsignacionController extends Controller
     }
 
     /**
+     * Mover una asignación arriba o abajo dentro del orden del culto.
+     */
+    public function mover(Request $request, Culto $culto, Asignacion $asignacion)
+    {
+        $request->validate([
+            'direccion' => 'required|in:arriba,abajo',
+        ], [
+            'direccion.required' => 'Debe indicar la dirección del movimiento.',
+            'direccion.in'       => 'La dirección del movimiento no es válida.',
+        ]);
+
+        if ($asignacion->culto_id !== $culto->id) {
+            abort(403, 'La asignación no pertenece a este culto.');
+        }
+
+        // Lista activa del culto en el orden actualmente visible
+        $lista = $culto->asignaciones()
+            ->where('estado', 'asignado')
+            ->orderByRaw('orden IS NULL, orden, id')
+            ->get()
+            ->values();
+
+        $indice = $lista->search(fn ($a) => $a->id === $asignacion->id);
+
+        if ($indice === false) {
+            return redirect()->route('cultos.show', $culto->id);
+        }
+
+        $destino = $request->direccion === 'arriba' ? $indice - 1 : $indice + 1;
+
+        // Si ya está en el borde superior/inferior no hay nada que hacer
+        if ($destino < 0 || $destino >= $lista->count()) {
+            return redirect()->route('cultos.show', $culto->id);
+        }
+
+        // Mover dentro de la lista y renumerar 1..N el culto completo
+        $movida = $lista->pull($indice);
+        $lista->splice($destino, 0, [$movida]);
+
+        foreach ($lista as $i => $a) {
+            if ((int) $a->orden !== $i + 1) {
+                $a->update(['orden' => $i + 1]);
+            }
+        }
+
+        return redirect()->route('cultos.show', $culto->id);
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Culto $culto, Asignacion $asignacion)

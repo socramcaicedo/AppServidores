@@ -154,6 +154,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th style="width:90px;">N°</th>
                         <th>Servidor</th>
                         <th>Rol de servicio</th>
                         <th>Confirmado</th>
@@ -164,6 +165,41 @@
                 <tbody>
                     @forelse($culto->asignaciones as $asignacion)
                     <tr>
+                        <td>
+                            <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
+                                @if($culto->fecha->addHours(12)->isFuture())
+                                @if(!$loop->first)
+                                <form method="POST" action="{{ route('cultos.asignaciones.mover', [$culto->id, $asignacion->id]) }}" style="display:inline;">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="direccion" value="arriba">
+                                    <button type="submit" title="Subir en el orden"
+                                            style="padding:2px 7px; font-size:11px; background:#E8F0FB; color:#1A4FA8; border:1px solid #D1DCF0; border-radius:5px; cursor:pointer; line-height:1;"
+                                            onmouseover="this.style.background='#d8e6f8'"
+                                            onmouseout="this.style.background='#E8F0FB'">&#9650;</button>
+                                </form>
+                                @else
+                                <span style="display:inline-block; width:26px;"></span>
+                                @endif
+                                @endif
+
+                                <span style="font-size:13px; font-weight:700; color:#0D2F6E;">{{ $loop->iteration }}</span>
+
+                                @if($culto->fecha->addHours(12)->isFuture())
+                                @if(!$loop->last)
+                                <form method="POST" action="{{ route('cultos.asignaciones.mover', [$culto->id, $asignacion->id]) }}" style="display:inline;">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="direccion" value="abajo">
+                                    <button type="submit" title="Bajar en el orden"
+                                            style="padding:2px 7px; font-size:11px; background:#E8F0FB; color:#1A4FA8; border:1px solid #D1DCF0; border-radius:5px; cursor:pointer; line-height:1;"
+                                            onmouseover="this.style.background='#d8e6f8'"
+                                            onmouseout="this.style.background='#E8F0FB'">&#9660;</button>
+                                </form>
+                                @else
+                                <span style="display:inline-block; width:26px;"></span>
+                                @endif
+                                @endif
+                            </div>
+                        </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div class="avatar">
@@ -236,7 +272,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" style="text-align:center; color:#999; padding:2rem;">
+                        <td colspan="6" style="text-align:center; color:#999; padding:2rem;">
                             No hay servidores asignados a este culto aún.
                         </td>
                     </tr>
