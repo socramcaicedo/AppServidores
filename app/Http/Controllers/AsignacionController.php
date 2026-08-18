@@ -32,8 +32,11 @@ class AsignacionController extends Controller
                 ->with('error', 'No se puede asignar un servidor inactivo.');
         }
 
+        // Solo cuentan las asignaciones activas: un servidor reemplazado
+        // puede volver a asignarse al mismo culto con otro rol.
         $existente = Asignacion::where('culto_id', $culto->id)
             ->where('servidor_id', $request->servidor_id)
+            ->where('estado', 'asignado')
             ->first();
 
         if ($existente) {
@@ -194,8 +197,11 @@ class AsignacionController extends Controller
         }
 
         // PASO 4: Verificar que el nuevo servidor no ya esté asignado a este culto
+        // (solo cuentan las asignaciones activas: un servidor previamente
+        // reemplazado sí puede usarse como reemplazo de otro)
         $existente = Asignacion::where('culto_id', $culto->id)
             ->where('servidor_id', $request->nuevo_servidor_id)
+            ->where('estado', 'asignado')
             ->where('id', '!=', $asignacion->id)
             ->first();
 
