@@ -287,15 +287,15 @@ class CultoController extends Controller
         // Cargar las relaciones necesarias
         $culto->load(['asignaciones.servidor', 'mensajeAutor']);
 
-        // Agrupar asignaciones por rol para mejor organización
-        $asignacionesPorRol = $culto->asignaciones->where('estado', 'asignado')
-            ->sortBy('rol_servicio')
-            ->groupBy('rol_servicio');
+        // Asignaciones activas en el orden definido para el culto (primero a último)
+        $asignaciones = $culto->asignaciones->where('estado', 'asignado')
+            ->sortBy([['orden', 'asc'], ['id', 'asc']])
+            ->values();
 
         // Generar el PDF
         $pdf = PDF::loadView('cultos.pdf', [
-            'culto' => $culto,
-            'asignacionesPorRol' => $asignacionesPorRol,
+            'culto'        => $culto,
+            'asignaciones' => $asignaciones,
         ]);
 
         // Mostrar el PDF en el navegador (stream en lugar de download)

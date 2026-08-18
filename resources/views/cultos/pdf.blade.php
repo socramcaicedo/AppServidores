@@ -211,14 +211,14 @@
                 ORDEN DEL SERVICIO
             </div>
 
-            @if($asignacionesPorRol->count() > 0)
-                @foreach($asignacionesPorRol as $rol => $asignaciones)
-                    @foreach($asignaciones as $asignacion)
-                    <div class="asignacion-item">
-                        <span class="asignacion-rol">{{ ucfirst($rol) }}:</span>
-                        <span class="asignacion-servidor">{{ $asignacion->servidor->nombre_completo }}</span>
-                    </div>
-                    @endforeach
+            @if($asignaciones->count() > 0)
+                @foreach($asignaciones as $asignacion)
+                <div class="asignacion-item">
+                    {{ $loop->iteration }}.
+                    <span class="asignacion-rol">{{ $asignacion->rol_servicio }}</span>
+                    &mdash;
+                    <span class="asignacion-servidor">{{ $asignacion->servidor->nombre_completo }}</span>
+                </div>
                 @endforeach
             @else
                 <div class="sin-servidores">
